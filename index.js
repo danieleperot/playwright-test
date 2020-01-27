@@ -23,9 +23,9 @@ const folder = path.resolve('output', args.folder || url.split('//').pop());
 if (!fs.existsSync(path.resolve('output'))) fs.mkdirSync(path.resolve('output'))
 if (!fs.existsSync(folder)) fs.mkdirSync(folder)
 
-const generateViewport = async (browser, prefix, { width, height }, multibar) => {
-  console.log(`${prefix} - Viewport: ${width} x ${height}`);
+const generateViewport = async (name, prefix, { width, height }, multibar) => {
   const bar = multibar.create(100, 0)
+  const browser = await playwright[name].launch();
   const context = await browser.newContext({
     viewport: { width, height, isMobile: true }
   });
@@ -43,11 +43,11 @@ const generateViewport = async (browser, prefix, { width, height }, multibar) =>
   });
   bar.update(100, {filename: `Viewport: ${width} x ${height}` })
   bar.stop()
+  browser.close()
 };
 
 const browserHandle = async name => {
   console.log(`Generazione per il browser: ${name}`);
-  const browser = await playwright[name].launch();
   const multibar = new cliProgress.MultiBar({
     clearOnComplete: false,
     hideCursor: true
@@ -56,9 +56,9 @@ const browserHandle = async name => {
     { width: 1920, height: 1080 },
     { width: 380, height: 640 }
   ]) {
-    await generateViewport(browser, `${name}`, viewport, multibar);
+    await generateViewport(name, `${name}`, viewport, multibar);
   }
-  await browser.close();
+  multibar.stop()
 };
 
 (async () => {
